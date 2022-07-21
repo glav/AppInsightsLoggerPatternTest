@@ -37,7 +37,6 @@ public class Startup
             host = CreateHostProgrammatically();
         }
 
-
         host.Run();
 
     }
@@ -58,34 +57,34 @@ public class Startup
 
     static IHost CreateHostViaAppsettings()
     {
-            return = Host.CreateDefaultBuilder()
-                   .ConfigureServices((ctx, builder) =>
-                   {
-                       builder.AddHostedService<GenericHost>();
-                   })
-                   .Build();
+        return Host.CreateDefaultBuilder()
+               .ConfigureServices((ctx, builder) =>
+               {
+                   builder.AddHostedService<GenericHost>();
+               })
+               .Build();
 
     }
 
     static IHost CreateHostProgrammatically()
     {
-            return = Host.CreateDefaultBuilder()
-                   .ConfigureLogging((ctx, builder) =>
-                   {
-                       builder.SetMinimumLevel(LogLevel.Debug);
-                       builder.AddFilter<ConsoleLoggerProvider>("Microsoft", LogLevel.Warning);
-                       builder.AddJsonConsole(x =>
-                               {
-                                   x.IncludeScopes = true;
-                                   x.UseUtcTimestamp = true;
-                                   x.JsonWriterOptions = new JsonWriterOptions { Indented = true };
-                               });
-                   })
-                   .ConfigureServices((ctx, builder) =>
-                   {
-                       builder.AddHostedService<GenericHost>();
-                   })
-                   .Build();
+        return Host.CreateDefaultBuilder()
+               .ConfigureLogging((ctx, builder) =>
+               {
+                   builder.SetMinimumLevel(LogLevel.Debug);
+                   builder.AddFilter<ConsoleLoggerProvider>("Microsoft", LogLevel.Warning);
+                   builder.AddJsonConsole(x =>
+                           {
+                               x.IncludeScopes = true;
+                               x.UseUtcTimestamp = true;
+                               x.JsonWriterOptions = new JsonWriterOptions { Indented = true };
+                           });
+               })
+               .ConfigureServices((ctx, builder) =>
+               {
+                   builder.AddHostedService<GenericHost>();
+               })
+               .Build();
 
     }
 }
