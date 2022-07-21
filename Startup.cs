@@ -1,28 +1,44 @@
 using System;
 using System.IO;
+using System.Text.Json;
+using appinsightsloggerpatterntest;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 
 public class Startup
 {
+    private const bool USE_APPSETTINGS_CONFIG = true;
     public static void Initialise()
     {
         var appConfig = LoadAppSettings();
 
-        if (appConfig == null)
-        {
-            Console.WriteLine("Missing or invalid appsettings.json...exiting");
-            return;
-        }
 
-        var appInsightsConnectionString = appConfig["configValue"];
-        if (string.IsNullOrWhiteSpace(appInsightsConnectionString))
+        IHost host;
+        if (USE_APPSETTINGS_CONFIG)
         {
-            Console.WriteLine("No AppInsights connection string present. No AppInsights logging will be performed.");
+            var appInsightsConnectionString = appConfig["configValue"];
+            if (string.IsNullOrWhiteSpace(appInsightsConnectionString))
+            {
+                Console.WriteLine("No AppInsights connection string present. No AppInsights logging will be performed.");
+            }
+            else
+            {
+                Console.WriteLine("AppInsights connection string present. Logging to AppInsights enabled.");
+            }
+
+            host = CreateHostViaAppsettings();
         }
         else
         {
-            Console.WriteLine("AppInsights connection string present. Logging to AppInsights enabled.");
+            host = CreateHostProgrammatically();
         }
+
+
+        host.Run();
 
     }
 
@@ -40,4 +56,36 @@ public class Startup
         return appConfig;
     }
 
+    static IHost CreateHostViaAppsettings()
+    {
+            return = Host.CreateDefaultBuilder()
+                   .ConfigureServices((ctx, builder) =>
+                   {
+                       builder.AddHostedService<GenericHost>();
+                   })
+                   .Build();
+
+    }
+
+    static IHost CreateHostProgrammatically()
+    {
+            return = Host.CreateDefaultBuilder()
+                   .ConfigureLogging((ctx, builder) =>
+                   {
+                       builder.SetMinimumLevel(LogLevel.Debug);
+                       builder.AddFilter<ConsoleLoggerProvider>("Microsoft", LogLevel.Warning);
+                       builder.AddJsonConsole(x =>
+                               {
+                                   x.IncludeScopes = true;
+                                   x.UseUtcTimestamp = true;
+                                   x.JsonWriterOptions = new JsonWriterOptions { Indented = true };
+                               });
+                   })
+                   .ConfigureServices((ctx, builder) =>
+                   {
+                       builder.AddHostedService<GenericHost>();
+                   })
+                   .Build();
+
+    }
 }
