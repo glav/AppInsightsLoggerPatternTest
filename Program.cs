@@ -1,18 +1,19 @@
 ﻿using System;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
-namespace appinsightsloggerpatterntest
+/*******************************************************************************
+** This sample utilises the LoggerMessage pattern for high performance logging
+** See: https://docs.microsoft.com/en-us/dotnet/core/extensions/high-performance-logging
+**
+*******************************************************************************/
+namespace appinhsightsplay
 {
-    internal class Program
+    class Program
     {
         static void Main(string[] args)
         {
             Console.WriteLine("Console with App Settings Using LoggerMessage Pattern");
 
             Startup.Initialise();
-
         }
     }
 

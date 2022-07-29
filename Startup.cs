@@ -1,7 +1,8 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using appinsightsloggerpatterntest;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -20,21 +21,11 @@ public class Startup
         IHost host;
         if (USE_APPSETTINGS_CONFIG)
         {
-            var appInsightsConnectionString = appConfig["configValue"];
-            if (string.IsNullOrWhiteSpace(appInsightsConnectionString))
-            {
-                Console.WriteLine("No AppInsights connection string present. No AppInsights logging will be performed.");
-            }
-            else
-            {
-                Console.WriteLine("AppInsights connection string present. Logging to AppInsights enabled.");
-            }
-
-            host = CreateHostViaAppsettings();
+            host = CreateHostViaAppsettings(appConfig);
         }
         else
         {
-            host = CreateHostProgrammatically();
+            host = CreateHostProgrammatically(appConfig);
         }
 
         host.Run();
@@ -43,8 +34,6 @@ public class Startup
 
     static IConfigurationRoot LoadAppSettings()
     {
-        var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
         var appConfig = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -52,21 +41,29 @@ public class Startup
             .AddEnvironmentVariables()
             .Build();
 
-        return appConfig;
+        var appConfigWithInsights = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile($"appsettings.local.json", true, true)
+            .AddEnvironmentVariables()
+            .AddApplicationInsightsSettings(appConfig["appInsightsConnectionString"],true)
+            .Build();
+        return appConfigWithInsights;
     }
 
-    static IHost CreateHostViaAppsettings()
+    static IHost CreateHostViaAppsettings(IConfigurationRoot configRoot)
     {
         return Host.CreateDefaultBuilder()
                .ConfigureServices((ctx, builder) =>
                {
                    builder.AddHostedService<GenericHost>();
+                   builder.AddSingleton<IConfigurationRoot>(configRoot);
                })
                .Build();
 
     }
 
-    static IHost CreateHostProgrammatically()
+    static IHost CreateHostProgrammatically(IConfigurationRoot configRoot)
     {
         return Host.CreateDefaultBuilder()
                .ConfigureLogging((ctx, builder) =>
@@ -83,6 +80,7 @@ public class Startup
                .ConfigureServices((ctx, builder) =>
                {
                    builder.AddHostedService<GenericHost>();
+                   builder.AddSingleton<IConfigurationRoot>(configRoot);
                })
                .Build();
 
